@@ -2,9 +2,8 @@ import pygame
 from .paddle import Paddle
 from .ball import Ball
 
-# Game Engine
-
 WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
 
 class GameEngine:
     def __init__(self, width, height):
@@ -20,6 +19,10 @@ class GameEngine:
         self.player_score = 0
         self.ai_score = 0
         self.font = pygame.font.SysFont("Arial", 30)
+        self.large_font = pygame.font.SysFont("Arial", 60)
+
+        self.game_over = False
+        self.winner_text = ""
 
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -29,18 +32,20 @@ class GameEngine:
             self.player.move(10, self.height)
 
     def update(self):
-    # Move the ball first
+        if self.game_over:
+            return  # Stop updating gameplay when over
+
         self.ball.move()
 
-    # --- Immediate collision check (fix for tunneling) ---
+        # --- Collision check ---
         if self.ball.rect().colliderect(self.player.rect()):
-            self.ball.x = self.player.x + self.player.width  # reposition to avoid sticking
-            self.ball.velocity_x = abs(self.ball.velocity_x)  # move right
+            self.ball.x = self.player.x + self.player.width
+            self.ball.velocity_x = abs(self.ball.velocity_x)
         elif self.ball.rect().colliderect(self.ai.rect()):
-            self.ball.x = self.ai.x - self.ball.width  # reposition to avoid sticking
-            self.ball.velocity_x = -abs(self.ball.velocity_x)  # move left
+            self.ball.x = self.ai.x - self.ball.width
+            self.ball.velocity_x = -abs(self.ball.velocity_x)
 
-    # Now handle scoring
+        # --- Scoring ---
         if self.ball.x <= 0:
             self.ai_score += 1
             self.ball.reset()
@@ -48,18 +53,39 @@ class GameEngine:
             self.player_score += 1
             self.ball.reset()
 
-    # AI movement
         self.ai.auto_track(self.ball, self.height)
 
+        # --- Check for game over ---
+        self.check_game_over()
+
     def render(self, screen):
-        # Draw paddles and ball
+        screen.fill(BLACK)
         pygame.draw.rect(screen, WHITE, self.player.rect())
         pygame.draw.rect(screen, WHITE, self.ai.rect())
         pygame.draw.ellipse(screen, WHITE, self.ball.rect())
-        pygame.draw.aaline(screen, WHITE, (self.width//2, 0), (self.width//2, self.height))
+        pygame.draw.aaline(screen, WHITE, (self.width // 2, 0), (self.width // 2, self.height))
 
-        # Draw score
         player_text = self.font.render(str(self.player_score), True, WHITE)
         ai_text = self.font.render(str(self.ai_score), True, WHITE)
-        screen.blit(player_text, (self.width//4, 20))
-        screen.blit(ai_text, (self.width * 3//4, 20))
+        screen.blit(player_text, (self.width // 4, 20))
+        screen.blit(ai_text, (self.width * 3 // 4, 20))
+
+        # Display winner text if game is over
+        if self.game_over:
+            text = self.large_font.render(self.winner_text, True, WHITE)
+            text_rect = text.get_rect(center=(self.width // 2, self.height // 2))
+            screen.blit(text, text_rect)
+
+    def check_game_over(self):
+        if self.player_score >= 5:
+            self.winner_text = "Player Wins!"
+            self.game_over = True
+        elif self.ai_score >= 5:
+            self.winner_text = "AI Wins!"
+            self.game_over = True
+
+        if self.game_over:
+            pygame.display.flip()
+            pygame.time.delay(2000)  # 2 seconds pause
+            pygame.quit()
+            exit()
