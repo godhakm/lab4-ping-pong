@@ -23,6 +23,7 @@ class GameEngine:
 
         self.game_over = False
         self.winner_text = ""
+        self.winning_score = 5  # default
 
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -33,7 +34,7 @@ class GameEngine:
 
     def update(self):
         if self.game_over:
-            return  # Freeze game logic after win
+            return  # freeze game updates when over
 
         self.ball.move()
 
@@ -63,21 +64,29 @@ class GameEngine:
         pygame.draw.ellipse(screen, WHITE, self.ball.rect())
         pygame.draw.aaline(screen, WHITE, (self.width // 2, 0), (self.width // 2, self.height))
 
+        # Scores
         player_text = self.font.render(str(self.player_score), True, WHITE)
         ai_text = self.font.render(str(self.ai_score), True, WHITE)
         screen.blit(player_text, (self.width // 4, 20))
         screen.blit(ai_text, (self.width * 3 // 4, 20))
 
-        # Draw winner message if game over
+        # Winner text if game over
         if self.game_over:
             text = self.large_font.render(self.winner_text, True, WHITE)
-            text_rect = text.get_rect(center=(self.width // 2, self.height // 2))
+            text_rect = text.get_rect(center=(self.width // 2, self.height // 2 - 50))
             screen.blit(text, text_rect)
 
     def check_game_over(self):
-        if self.player_score >= 5:
+        if self.player_score >= self.winning_score:
             self.winner_text = "Player Wins!"
             self.game_over = True
-        elif self.ai_score >= 5:
+        elif self.ai_score >= self.winning_score:
             self.winner_text = "AI Wins!"
             self.game_over = True
+
+    def reset_game(self):
+        self.player_score = 0
+        self.ai_score = 0
+        self.ball.reset()
+        self.game_over = False
+        self.winner_text = ""
