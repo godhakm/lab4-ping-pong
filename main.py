@@ -65,13 +65,10 @@ def main():
         pygame.display.flip()
         clock.tick(FPS)
 
-        # Handle Game Over and Replay Menu
         if engine.game_over:
-            pygame.display.flip()
-            pygame.time.wait(2000)  # show winner message for 2 seconds
+            pygame.time.wait(2000)  # show winner message
             choice = show_replay_menu()
-
-            if choice is None:  # ESC pressed
+            if choice is None:
                 running = False
             else:
                 engine.winning_score = choice
